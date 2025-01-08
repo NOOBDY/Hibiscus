@@ -33,4 +33,4 @@ main uv =
         d1 = d t;
         d2 = d1 y;
     in
-        Vec4 x y d3 (3.0 % 20);
+        Vec4 x y d3 (3.0 % 2.0);
