@@ -58,6 +58,7 @@ tokens :-
 <0> "-"     { tok Minus }
 <0> "*"     { tok Times }
 <0> "/"     { tok Divide }
+<0> "%"     { tok Mod }
 
 <0> "=="    { tok Eq }
 <0> "<>"    { tok Neq }
@@ -154,6 +155,7 @@ data Token
   | Minus
   | Times
   | Divide
+  | Mod
   -- comp
   | Eq
   | Neq

@@ -37,6 +37,7 @@ import Hibiscus.Ast
   '-'         { L.RangedToken L.Minus _ }
   '*'         { L.RangedToken L.Times _ }
   '/'         { L.RangedToken L.Divide _ }
+  '%'         { L.RangedToken L.Mod _ }
   '=='        { L.RangedToken L.Eq _ }
   '<>'        { L.RangedToken L.Neq _ }
   '<'         { L.RangedToken L.Lt _ }
@@ -59,7 +60,7 @@ import Hibiscus.Ast
 %left '&'
 %nonassoc '==' '<>' '<' '>' '<=' '>='
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' '%'
 
 %%
 
@@ -111,6 +112,7 @@ expr :: { Expr L.Range }
   | expr '-'  expr      { EBinOp (info $1 <-> info $3) $1 (Minus (L.rtRange $2)) $3 }
   | expr '*'  expr      { EBinOp (info $1 <-> info $3) $1 (Times (L.rtRange $2)) $3 }
   | expr '/'  expr      { EBinOp (info $1 <-> info $3) $1 (Divide (L.rtRange $2)) $3 }
+  | expr '%'  expr      { EBinOp (info $1 <-> info $3) $1 (Mod (L.rtRange $2)) $3 }
   -- Comparison operators
   | expr '==' expr      { EBinOp (info $1 <-> info $3) $1 (Eq (L.rtRange $2)) $3 }
   | expr '<>' expr      { EBinOp (info $1 <-> info $3) $1 (Neq (L.rtRange $2)) $3 }
@@ -144,6 +146,7 @@ atom :: { Expr L.Range }
   | '(' '-' ')'               { EOp (L.rtRange $1 <-> L.rtRange $3) (Minus (L.rtRange $2)) }
   | '(' '*' ')'               { EOp (L.rtRange $1 <-> L.rtRange $3) (Times (L.rtRange $2)) }
   | '(' '/' ')'               { EOp (L.rtRange $1 <-> L.rtRange $3) (Divide (L.rtRange $2)) }
+  | '(' '%' ')'               { EOp (L.rtRange $1 <-> L.rtRange $3) (Mod (L.rtRange $2)) }
   -- Comparison operators
   | '(' '=' ')'               { EOp (L.rtRange $1 <-> L.rtRange $3) (Eq (L.rtRange $2)) }
   | '(' '<>' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (Neq (L.rtRange $2)) }

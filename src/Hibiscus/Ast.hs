@@ -85,6 +85,7 @@ data Op a
   | Minus a
   | Times a
   | Divide a
+  | Mod a
   | Eq a
   | Neq a
   | Lt a
