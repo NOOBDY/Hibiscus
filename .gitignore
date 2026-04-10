@@ -24,3 +24,7 @@ cabal.project.local~
 src/Lexer.hs
 src/Main
 shader/*
+.direnv/
+
+*.asm
+*.spv
