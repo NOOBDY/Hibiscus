@@ -25,7 +25,9 @@ library:
     - base
     - bytestring
     - containers
+    - data-fix
     - mtl
+    - text
     - transformers
   build-tools:
     - alex
