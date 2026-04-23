@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.2.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -28,6 +28,12 @@ library
       Hibiscus.CodeGen.GenExpr
       Hibiscus.CodeGen.Type.Builtin
       Hibiscus.CodeGen.Util
+      Hibiscus.Parsing.Debug
+      Hibiscus.Parsing.Lexer.Interface
+      Hibiscus.Parsing.Lexer2
+      Hibiscus.Syntax.Ast
+      Hibiscus.Syntax.Pretty
+      Hibiscus.Syntax.Render
       Hibiscus.TypeInfer.RSF
       Hibiscus.TypeInfer.Type4plus
       Hibiscus.Util
@@ -44,7 +50,10 @@ library
     , base
     , bytestring
     , containers
+    , data-fix
     , mtl
+    , prettyprinter
+    , text
     , transformers
   default-language: Haskell2010
 

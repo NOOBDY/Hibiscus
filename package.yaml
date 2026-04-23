@@ -27,6 +27,7 @@ library:
     - containers
     - data-fix
     - mtl
+    - prettyprinter
     - text
     - transformers
   build-tools:

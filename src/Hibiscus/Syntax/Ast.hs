@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveFunctor #-}
+
 module Hibiscus.Syntax.Ast where
 
 import Data.Fix (Fix (..))
@@ -27,6 +29,7 @@ data TypeF loc v r
   | TArrow loc r r
   | TTuple loc [r]
   | TArray loc Int r
+  deriving (Functor)
 
 newtype Type loc v = Type {unType :: Fix (TypeF loc v)}
 
