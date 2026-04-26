@@ -5,13 +5,13 @@
 -- and add ranges to tokens
 
 {
-module Hibiscus.Parsing.Lexer2 where
+module Hibiscus.Parser.Lexer where
 
 import Control.Monad.Except (throwError)
 import Control.Monad.State (gets, modify')
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.Text.Encoding as T
-import Hibiscus.Parsing.Lexer.Interface
+import Hibiscus.Parser.Lexer.Interface
 }
 
 %encoding "latin1"

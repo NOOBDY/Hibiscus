@@ -1,8 +1,8 @@
 module Hibiscus.Parsing.Debug where
 
 import Debug.Trace
-import Hibiscus.Parsing.Lexer.Interface
-import Hibiscus.Parsing.Lexer2
+import Hibiscus.Parser.Lexer.Interface
+import Hibiscus.Parser.Lexer
 import qualified Data.ByteString.Lazy.Char8 as BS
 
 lexAll :: Lexer ()

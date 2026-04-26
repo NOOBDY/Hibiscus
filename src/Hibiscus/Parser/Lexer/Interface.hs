@@ -1,4 +1,4 @@
-module Hibiscus.Parsing.Lexer.Interface where
+module Hibiscus.Parser.Lexer.Interface where
 
 import Control.Monad.Except (MonadError)
 import Control.Monad.State (MonadState, StateT (runStateT), gets, modify')
