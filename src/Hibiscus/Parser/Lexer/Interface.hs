@@ -5,6 +5,7 @@ import Control.Monad.State (MonadState, StateT (runStateT), gets, modify')
 import Data.ByteString.Lazy.Char8 (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Char (ord)
+import Data.Int (Int64)
 import Data.List (uncons)
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
@@ -53,27 +54,30 @@ data Pos = Pos
 data AlexInput = Input
   { inpPos :: Pos
   , inpLast :: {-# UNPACK #-} !Char
-  , inpStream :: !ByteString
+  , inpStr :: !ByteString
+  , inpBytePos :: !Int64
   }
   deriving (Eq, Show)
 
 alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte inp@Input{inpPos = pos, inpStream = str} = advance <$> BS.uncons str
+alexGetByte inp@Input{inpPos = pos, inpStr = str, inpBytePos = bPos} = advance <$> BS.indexMaybe str bPos
  where
-  advance ('\n', rest) =
+  advance '\n' =
     ( fromIntegral (ord '\n')
     , Input
         { inpPos = Pos{posLine = posLine pos + 1, posCol = 1}
         , inpLast = '\n'
-        , inpStream = rest
+        , inpStr = str
+        , inpBytePos = bPos + 1
         }
     )
-  advance (c, rest) =
+  advance c =
     ( fromIntegral (ord c)
     , Input
         { inpPos = Pos{posLine = posLine pos, posCol = posCol pos + 1}
         , inpLast = c
-        , inpStream = rest
+        , inpStr = str
+        , inpBytePos = bPos + 1
         }
     )
 
@@ -97,7 +101,7 @@ data LexerState = LS
 initState :: ByteString -> LexerState
 initState str =
   LS
-    { lexerInput = Input (Pos 0 1) '\n' str
+    { lexerInput = Input (Pos 0 1) '\n' str 0
     , lexerStartCodes = 0 :| []
     , lexerLayout = []
     }

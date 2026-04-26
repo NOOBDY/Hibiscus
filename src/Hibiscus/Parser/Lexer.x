@@ -78,18 +78,18 @@ doEOF _ = do
 
 scan :: Lexer Token
 scan = do
-  input@(Input _ _ str) <- gets lexerInput
+  input@(Input _ _ str bPos) <- gets lexerInput
   code <- getStartCode
   case alexScan input code of
     AlexEOF -> handleEOF
-    AlexError (Input _ _ inp) ->
-      throwError $ "Lexical error: " <> show (BS.head inp)
+    AlexError (Input _ _ inp bPos) ->
+      throwError $ "Lexical error: " <> show (BS.index inp bPos)
     AlexSkip input' _ -> do
       modify' $ \s -> s{lexerInput = input'}
       scan
     AlexToken input' tokl action -> do
       modify' $ \s -> s{lexerInput = input'}
-      action (BS.take (fromIntegral tokl) str)
+      action (BS.take (fromIntegral tokl) (BS.drop bPos str))
 
 layoutKw t _ = do
   pushStartCode layout
