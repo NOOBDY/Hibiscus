@@ -1,9 +1,11 @@
-module Hibiscus.Parsing.Debug where
+module Hibiscus.Parser.Debug where
 
-import Debug.Trace
-import Hibiscus.Parser.Lexer.Interface
-import Hibiscus.Parser.Lexer
 import qualified Data.ByteString.Lazy.Char8 as BS
+import Debug.Trace
+import Hibiscus.Parser.Lexer
+import Hibiscus.Parser.Lexer.Interface
+import Hibiscus.Parser.Pretty
+import Prettyprinter
 
 lexAll :: Lexer ()
 lexAll = do
@@ -11,12 +13,12 @@ lexAll = do
   case rtToken tok of
     TkEOF -> pure ()
     x -> do
-      traceM (show tok)
+      traceM $ show x <> " " <> show (pretty (rtRange tok))
       lexAll
 
 m file = do
   source <- BS.readFile file
   case runLexer lexAll source of
-    Left _ -> return ()
-    Right err -> print err
+    Left err -> print err
+    Right _ -> return ()
   return ()

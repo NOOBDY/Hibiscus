@@ -12,6 +12,8 @@ import Control.Monad.State (gets, modify')
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.Text.Encoding as T
 import Hibiscus.Parser.Lexer.Interface
+import Prettyprinter
+import Hibiscus.Parser.Pretty
 }
 
 %encoding "latin1"
@@ -89,8 +91,8 @@ scan = do
   code <- getStartCode
   case alexScan input code of
     AlexEOF -> handleEOF
-    AlexError (Input _ _ inp bPos) ->
-      throwError $ "Lexical error: " <> show (BS.index inp bPos)
+    AlexError (Input pos _ inp bPos) ->
+      throwError $ "Lexical error on '" <> [BS.head inp] <> "' at " <> show (pretty pos)
     AlexSkip input' _ -> do
       modify' $ \s -> s{lexerInput = input'}
       scan
