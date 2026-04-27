@@ -12,8 +12,6 @@ import Control.Monad.State (gets, modify')
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.Text.Encoding as T
 import Hibiscus.Parser.Lexer.Interface
-
-import Debug.Trace
 }
 
 %encoding "latin1"
@@ -92,11 +90,7 @@ scan = do
       scan
     AlexToken input'@(Input p _ _ bPos') tokl action -> do
       modify' $ \s -> s{lexerInput = input'}
-      traceM $ show p
-      traceM $ show bPos <> " " <> show bPos'
-      -- action (BS.take (fromIntegral tokl) str)
-      action input' (bPos' - bPos)
-      -- action input' (fromIntegral tokl)
+      action input (bPos' - bPos)
 
 -- layoutKw :: Token -> ByteString -> Lexer Token
 layoutKw t _ _ = do

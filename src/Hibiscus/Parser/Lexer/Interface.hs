@@ -10,9 +10,8 @@ import Data.List (uncons)
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
-import Data.Word (Word8)
-import Debug.Trace
 import qualified Data.Text.Encoding as T
+import Data.Word (Word8)
 import Hibiscus.Parsing.Lexer (runAlex)
 
 data Token
@@ -73,7 +72,7 @@ data AlexInput = Input
   deriving (Eq, Show)
 
 alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte inp@Input{inpPos = pos, inpStream = str, inpBytePos = bPos} = trace (BS.unpack str) $ advance <$> BS.uncons str
+alexGetByte inp@Input{inpPos = pos, inpStream = str, inpBytePos = bPos} = advance <$> BS.uncons str
  where
   advance ('\n', rest) =
     ( fromIntegral (ord '\n')
@@ -157,7 +156,7 @@ popLayout = modify' $ \st ->
 type Action a = AlexInput -> Int64 -> Lexer a
 
 emit :: (Text -> Token) -> Action Token
-emit tk inp@(Input _ _ str _) len = trace (BS.unpack str) $ (pure . tk . T.decodeUtf8 . BS.toStrict) (BS.take len str)
+emit tk inp@(Input _ _ str _) len = (pure . tk . T.decodeUtf8 . BS.toStrict) (BS.take len str)
 
 token :: Token -> Action Token
 token tk inp@(Input _ _ str _) len = pure tk
