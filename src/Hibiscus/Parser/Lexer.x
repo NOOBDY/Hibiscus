@@ -66,17 +66,23 @@ handleEOF = do
   pushStartCode eof
   scan
 
-doEOF _ _ = do
+doEOF inp len = do
   t <- getLayout
   case t of
     Just _ -> do
       popLayout
-      pure TkVRCurly
+      pure RangedToken
+        { rtToken = TkVRCurly
+        , rtRange = mkRange inp len
+        }
     Nothing -> do
       popStartCode
-      pure TkEOF
+      pure RangedToken
+        { rtToken = TkEOF
+        , rtRange = mkRange inp len
+        }
 
-scan :: Lexer Token
+scan :: Lexer RangedToken
 scan = do
   input@(Input _ _ str bPos) <- gets lexerInput
   -- traceM $ BS.unpack str
@@ -92,17 +98,23 @@ scan = do
       modify' $ \s -> s{lexerInput = input'}
       action input (bPos' - bPos)
 
--- layoutKw :: Token -> ByteString -> Lexer Token
-layoutKw t _ _ = do
+-- layoutKw :: Token -> AlexInput -> Int64 -> Lexer Token
+layoutKw tk inp len = do
   pushStartCode layout
-  pure t
+  pure RangedToken
+    { rtToken = tk
+    , rtRange = mkRange inp len
+    }
 
-openBrace _ _ = do
+openBrace inp len = do
   popStartCode
   pushLayout ExplicitLayout
-  pure TkLCurly
+  pure RangedToken
+    { rtToken = TkLCurly
+    , rtRange = mkRange inp len
+    }
 
-startLayout _ _ = do
+startLayout inp len = do
   popStartCode
 
   reference <- getLayout
@@ -112,14 +124,20 @@ startLayout _ _ = do
     then pushStartCode empty_layout
     else pushLayout (LayoutColumn col)
 
-  pure TkVLCurly
+  pure RangedToken
+    { rtToken = TkLCurly
+    , rtRange = mkRange inp len
+    }
 
-emptyLayout _ _ = do
+emptyLayout inp len = do
   popStartCode
   pushStartCode newline
-  pure TkVRCurly
+  pure RangedToken
+    { rtToken = TkVRCurly
+    , rtRange = mkRange inp len
+    }
 
-offsideRule _ _ = do
+offsideRule inp len = do
   context <- getLayout
   col <- gets (posCol . inpPos . lexerInput)
 
@@ -132,10 +150,16 @@ offsideRule _ _ = do
       case col `compare` col' of
         EQ -> do
           popStartCode
-          pure TkVSemi
+          pure RangedToken
+            { rtToken = TkVSemi
+            , rtRange = mkRange inp len
+            }
         GT -> continue
         LT -> do
           popLayout
-          pure TkVRCurly
+          pure RangedToken
+            { rtToken = TkVRCurly
+            , rtRange = mkRange inp len
+            }
     Nothing -> continue
 }

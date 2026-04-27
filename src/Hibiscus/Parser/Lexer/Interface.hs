@@ -53,15 +53,25 @@ data Pos = Pos
   }
   deriving (Eq, Show)
 
+advancePos :: Pos -> Char -> Pos
+advancePos (Pos line col) '\t' = Pos line (col + tabSize - ((col - 1) `mod` tabSize))
+ where
+  tabSize :: Int -- TODO: optionally make it configurable
+  tabSize = 8
+advancePos (Pos line _) '\n' = Pos (line + 1) 1
+advancePos (Pos line col) _ = Pos line (col + 1)
+
 data Range = Range
   { rangeStart :: Pos
   , rangeStop :: Pos
   }
+  deriving (Show)
 
 data RangedToken = RangedToken
   { rtToken :: Token
   , rtRange :: Range
   }
+  deriving (Show)
 
 data AlexInput = Input
   { inpPos :: Pos
@@ -74,19 +84,10 @@ data AlexInput = Input
 alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
 alexGetByte inp@Input{inpPos = pos, inpStream = str, inpBytePos = bPos} = advance <$> BS.uncons str
  where
-  advance ('\n', rest) =
-    ( fromIntegral (ord '\n')
-    , Input
-        { inpPos = Pos{posLine = posLine pos + 1, posCol = 1}
-        , inpLast = '\n'
-        , inpStream = rest
-        , inpBytePos = bPos + 1
-        }
-    )
   advance (c, rest) =
     ( fromIntegral (ord c)
     , Input
-        { inpPos = Pos{posLine = posLine pos, posCol = posCol pos + 1}
+        { inpPos = advancePos pos c
         , inpLast = c
         , inpStream = rest
         , inpBytePos = bPos + 1
@@ -113,7 +114,7 @@ data LexerState = LS
 initState :: ByteString -> LexerState
 initState str =
   LS
-    { lexerInput = Input (Pos 0 1) '\n' str 0
+    { lexerInput = Input (Pos 1 1) '\n' str 0
     , lexerStartCodes = 0 :| []
     , lexerLayout = []
     }
@@ -153,24 +154,23 @@ popLayout = modify' $ \st ->
           [] -> []
     }
 
-type Action a = AlexInput -> Int64 -> Lexer a
+emit :: (Text -> Token) -> AlexInput -> Int64 -> Lexer RangedToken
+emit tk inp@(Input _ _ str _) len =
+  pure
+    RangedToken
+      { rtToken = tk $ (T.decodeUtf8 . BS.toStrict) (BS.take len str)
+      , rtRange = mkRange inp len
+      }
 
-emit :: (Text -> Token) -> Action Token
-emit tk inp@(Input _ _ str _) len = (pure . tk . T.decodeUtf8 . BS.toStrict) (BS.take len str)
-
-token :: Token -> Action Token
-token tk inp@(Input _ _ str _) len = pure tk
+token :: Token -> AlexInput -> Int64 -> Lexer RangedToken
+token tk inp@(Input _ _ str _) len =
+  pure
+    RangedToken
+      { rtToken = tk
+      , rtRange = mkRange inp len
+      }
 
 mkRange :: AlexInput -> Int64 -> Range
 mkRange (Input start _ str _) len = Range{rangeStart = start, rangeStop = stop}
  where
-  -- TODO: optionally make it configurable
-  tabSize :: Int
-  tabSize = 8
-
-  movePos :: Pos -> Char -> Pos
-  movePos (Pos line col) '\t' = Pos line (col + tabSize - ((col - 1) `mod` tabSize))
-  movePos (Pos line _) '\n' = Pos (line + 1) 1
-  movePos (Pos line col) _ = Pos line (col + 1)
-
-  stop = BS.foldl' movePos start (BS.take len str)
+  stop = BS.foldl' advancePos start (BS.take len str)

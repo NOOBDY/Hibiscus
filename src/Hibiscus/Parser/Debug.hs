@@ -8,10 +8,10 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 lexAll :: Lexer ()
 lexAll = do
   tok <- scan
-  case tok of
+  case rtToken tok of
     TkEOF -> pure ()
     x -> do
-      traceM (show x)
+      traceM (show tok)
       lexAll
 
 m file = do
