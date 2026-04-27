@@ -11,6 +11,9 @@ import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Data.Word (Word8)
+import Debug.Trace
+import qualified Data.Text.Encoding as T
+import Hibiscus.Parsing.Lexer (runAlex)
 
 data Token
   = TkIdent Text
@@ -51,32 +54,42 @@ data Pos = Pos
   }
   deriving (Eq, Show)
 
+data Range = Range
+  { rangeStart :: Pos
+  , rangeStop :: Pos
+  }
+
+data RangedToken = RangedToken
+  { rtToken :: Token
+  , rtRange :: Range
+  }
+
 data AlexInput = Input
   { inpPos :: Pos
   , inpLast :: {-# UNPACK #-} !Char
-  , inpStr :: !ByteString
+  , inpStream :: !ByteString
   , inpBytePos :: !Int64
   }
   deriving (Eq, Show)
 
 alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte inp@Input{inpPos = pos, inpStr = str, inpBytePos = bPos} = advance <$> BS.indexMaybe str bPos
+alexGetByte inp@Input{inpPos = pos, inpStream = str, inpBytePos = bPos} = trace (BS.unpack str) $ advance <$> BS.uncons str
  where
-  advance '\n' =
+  advance ('\n', rest) =
     ( fromIntegral (ord '\n')
     , Input
         { inpPos = Pos{posLine = posLine pos + 1, posCol = 1}
         , inpLast = '\n'
-        , inpStr = str
+        , inpStream = rest
         , inpBytePos = bPos + 1
         }
     )
-  advance c =
+  advance (c, rest) =
     ( fromIntegral (ord c)
     , Input
         { inpPos = Pos{posLine = posLine pos, posCol = posCol pos + 1}
         , inpLast = c
-        , inpStr = str
+        , inpStream = rest
         , inpBytePos = bPos + 1
         }
     )
@@ -141,8 +154,24 @@ popLayout = modify' $ \st ->
           [] -> []
     }
 
-emit :: (ByteString -> Token) -> ByteString -> Lexer Token
-emit f str = pure (f str)
+type Action a = AlexInput -> Int64 -> Lexer a
 
-token :: Token -> ByteString -> Lexer Token
-token tk str = pure tk
+emit :: (Text -> Token) -> Action Token
+emit tk inp@(Input _ _ str _) len = trace (BS.unpack str) $ (pure . tk . T.decodeUtf8 . BS.toStrict) (BS.take len str)
+
+token :: Token -> Action Token
+token tk inp@(Input _ _ str _) len = pure tk
+
+mkRange :: AlexInput -> Int64 -> Range
+mkRange (Input start _ str _) len = Range{rangeStart = start, rangeStop = stop}
+ where
+  -- TODO: optionally make it configurable
+  tabSize :: Int
+  tabSize = 8
+
+  movePos :: Pos -> Char -> Pos
+  movePos (Pos line col) '\t' = Pos line (col + tabSize - ((col - 1) `mod` tabSize))
+  movePos (Pos line _) '\n' = Pos (line + 1) 1
+  movePos (Pos line col) _ = Pos line (col + 1)
+
+  stop = BS.foldl' movePos start (BS.take len str)

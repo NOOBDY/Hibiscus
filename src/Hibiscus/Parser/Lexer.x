@@ -12,6 +12,8 @@ import Control.Monad.State (gets, modify')
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.Text.Encoding as T
 import Hibiscus.Parser.Lexer.Interface
+
+import Debug.Trace
 }
 
 %encoding "latin1"
@@ -32,8 +34,8 @@ $upper = [A-Z]
 <0> "let"   { layoutKw TkLet }
 <0> "where" { layoutKw TkWhere }
 
-<0> @ident  { emit (TkIdent . T.decodeUtf8 . BS.toStrict) }
-<0> @ctor   { emit (TkCtor . T.decodeUtf8 . BS.toStrict) }
+<0> @ident  { emit TkIdent }
+<0> @ctor   { emit TkCtor }
 <0> \\      { token TkBackslash }
 <0> "->"    { token TkArrow }
 <0> \=      { token TkEqual }
@@ -66,7 +68,7 @@ handleEOF = do
   pushStartCode eof
   scan
 
-doEOF _ = do
+doEOF _ _ = do
   t <- getLayout
   case t of
     Just _ -> do
@@ -79,6 +81,7 @@ doEOF _ = do
 scan :: Lexer Token
 scan = do
   input@(Input _ _ str bPos) <- gets lexerInput
+  -- traceM $ BS.unpack str
   code <- getStartCode
   case alexScan input code of
     AlexEOF -> handleEOF
@@ -87,20 +90,25 @@ scan = do
     AlexSkip input' _ -> do
       modify' $ \s -> s{lexerInput = input'}
       scan
-    AlexToken input' tokl action -> do
+    AlexToken input'@(Input p _ _ bPos') tokl action -> do
       modify' $ \s -> s{lexerInput = input'}
-      action (BS.take (fromIntegral tokl) (BS.drop bPos str))
+      traceM $ show p
+      traceM $ show bPos <> " " <> show bPos'
+      -- action (BS.take (fromIntegral tokl) str)
+      action input' (bPos' - bPos)
+      -- action input' (fromIntegral tokl)
 
-layoutKw t _ = do
+-- layoutKw :: Token -> ByteString -> Lexer Token
+layoutKw t _ _ = do
   pushStartCode layout
   pure t
 
-openBrace _ = do
+openBrace _ _ = do
   popStartCode
   pushLayout ExplicitLayout
   pure TkLCurly
 
-startLayout _ = do
+startLayout _ _ = do
   popStartCode
 
   reference <- getLayout
@@ -112,12 +120,12 @@ startLayout _ = do
 
   pure TkVLCurly
 
-emptyLayout _ = do
+emptyLayout _ _ = do
   popStartCode
   pushStartCode newline
   pure TkVRCurly
 
-offsideRule _ = do
+offsideRule _ _ = do
   context <- getLayout
   col <- gets (posCol . inpPos . lexerInput)
 
