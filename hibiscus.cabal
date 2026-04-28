@@ -28,9 +28,10 @@ library
       Hibiscus.CodeGen.GenExpr
       Hibiscus.CodeGen.Type.Builtin
       Hibiscus.CodeGen.Util
+      Hibiscus.Parser.Debug
       Hibiscus.Parser.Lexer
       Hibiscus.Parser.Lexer.Interface
-      Hibiscus.Parsing.Debug
+      Hibiscus.Parser.Pretty
       Hibiscus.Syntax.Ast
       Hibiscus.Syntax.Pretty
       Hibiscus.TypeInfer.RSF

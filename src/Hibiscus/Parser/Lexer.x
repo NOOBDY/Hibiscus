@@ -36,19 +36,22 @@ $upper = [A-Z]
 
 <0> @ident  { emit TkIdent }
 <0> @ctor   { emit TkCtor }
-<0> \\      { token TkBackslash }
+<0> "\\"    { token TkBackslash }
 <0> "->"    { token TkArrow }
-<0> \=      { token TkEqual }
-<0> \(      { token TkLParen }
-<0> \)      { token TkRParen }
-<0> \{      { token TkLCurly }
-<0> \}      { token TkRCurly }
+<0> "="     { token TkEqual }
+<0> "("     { token TkLParen }
+<0> ")"     { token TkRParen }
+<0> "{"     { token TkLCurly }
+<0> "}"     { token TkRCurly }
+
+<0> "--" .* \n  { \_ _ -> pushStartCode newline *> scan }
+<0> \n          { \_ _ -> pushStartCode newline *> scan }
 
 <layout> {
   "--" .* \n  ;
   \n          ;
 
-  \{          { openBrace }
+  "{"         { openBrace }
   ()          { startLayout }
 }
 
